@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'File received successfully' })
   } catch (error) {
     console.error('Server error:', error)
-    return NextResponse.json({ error: `Failed to process upload: ${error.message}` }, { status: 500 })
+    return NextResponse.json(
+      { error: `Failed to process upload: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { status: 500 }
+    )
   }
 }
 
