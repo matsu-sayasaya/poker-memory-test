@@ -9,7 +9,7 @@ export interface Question {
 export function parseCSV(file: File): Promise<Question[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
-      delimiter: ',', // Ensure this is set to comma
+      delimiter: ',',
       encoding: 'UTF-8',
       complete: (results) => {
         try {
@@ -18,36 +18,35 @@ export function parseCSV(file: File): Promise<Question[]> {
           }
 
           // Skip header row and process data rows until an empty row is encountered
-          const questions = results.data.slice(1)
-            .reduce((acc: Question[], row: any, index: number) => {
-              // Stop processing if we encounter an empty row
-              if (row.length === 1 && row[0] === '') {
-                return acc;
-              }
+          const questions = [];
+          for (let i = 1; i < results.data.length; i++) {
+            const row = results.data[i];
+            // Stop processing if we encounter an empty row
+            if (row.length === 1 && row[0] === '') {
+              break;
+            }
 
-              // Ensure row has enough columns and is not empty
-              if (row.length < 3 || row.every((cell: string) => cell.trim() === '')) {
-                console.warn(`Skipping invalid row at line ${index + 2}: ${JSON.stringify(row)}`);
-                return acc;
-              }
-              
-              // Convert string numbers to actual numbers
-              const sizeValue = parseFloat(String(row[1]).trim());
-              const freqValue = parseFloat(String(row[2]).trim());
-              
-              if (isNaN(sizeValue) || isNaN(freqValue)) {
-                console.warn(`Skipping row with invalid number format at line ${index + 2}: Size=${row[1]}, Freq=${row[2]}`);
-                return acc;
-              }
+            // Ensure row has enough columns and is not empty
+            if (row.length < 3 || row.every(cell => cell === '')) {
+              console.warn(`Skipping invalid row at line ${i + 1}: ${JSON.stringify(row)}`);
+              continue;
+            }
+            
+            // Convert string numbers to actual numbers
+            const sizeValue = parseFloat(String(row[1]).trim());
+            const freqValue = parseFloat(String(row[2]).trim());
+            
+            if (isNaN(sizeValue) || isNaN(freqValue)) {
+              console.warn(`Skipping row with invalid number format at line ${i + 1}: Size=${row[1]}, Freq=${row[2]}`);
+              continue;
+            }
 
-              acc.push({
-                condition: String(row[0]).trim(),
-                answerB: sizeValue,
-                answerC: freqValue,
-              });
-
-              return acc;
-            }, []);
+            questions.push({
+              condition: String(row[0]).trim(),
+              answerB: sizeValue,
+              answerC: freqValue,
+            });
+          }
 
           if (questions.length === 0) {
             throw new Error('No valid questions found in the CSV file');
