@@ -14,7 +14,6 @@ interface ParseResult {
 
 export function parseCSV(file: File): Promise<Question[]> {
   return new Promise((resolve, reject) => {
-    // Use Papa Parse's built-in file reading capability
     Papa.parse<string[]>(file, {
       complete: (results: Papa.ParseResult<string[]>) => {
         try {
@@ -22,22 +21,18 @@ export function parseCSV(file: File): Promise<Question[]> {
             throw new Error('CSV file is empty or has insufficient data');
           }
 
-          // Skip header row and process data rows until an empty row is encountered
           const questions: Question[] = [];
           for (let i = 1; i < results.data.length; i++) {
             const row = results.data[i];
-            // Stop processing if we encounter an empty row
             if (!row || (row.length === 1 && row[0] === '')) {
               break;
             }
 
-            // Ensure row has enough columns and is not empty
             if (row.length < 3 || row.every(cell => !cell || cell.trim() === '')) {
               console.warn(`Skipping invalid row at line ${i + 1}: ${JSON.stringify(row)}`);
               continue;
             }
             
-            // Convert string numbers to actual numbers
             const sizeValue = parseFloat(row[1].trim());
             const freqValue = parseFloat(row[2].trim());
             
@@ -62,12 +57,12 @@ export function parseCSV(file: File): Promise<Question[]> {
           reject(new Error(`Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`));
         }
       },
-      error: (error: Papa.ParseError) => {
+      error: (error: Papa.ParseError, file?: File) => {
         reject(new Error(`CSV parsing error: ${error.message}`));
       },
-      delimiter: ',',      // Use comma as delimiter
-      encoding: 'UTF-8',   // Specify UTF-8 encoding
-      skipEmptyLines: true // Skip empty lines automatically
+      delimiter: ',',
+      encoding: 'UTF-8',
+      skipEmptyLines: true
     });
   });
 }
