@@ -6,19 +6,25 @@ export interface Question {
   answerC: number;
 }
 
+interface ParseResult {
+  data: string[][];
+  errors: Papa.ParseError[];
+  meta: Papa.ParseMeta;
+}
+
 export function parseCSV(file: File): Promise<Question[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       delimiter: ',',
       encoding: 'UTF-8',
-      complete: (results) => {
+      complete: (results: ParseResult) => {
         try {
           if (!results.data || results.data.length < 2) {
             throw new Error('CSV file is empty or has insufficient data');
           }
 
           // Skip header row and process data rows until an empty row is encountered
-          const questions = [];
+          const questions: Question[] = [];
           for (let i = 1; i < results.data.length; i++) {
             const row = results.data[i];
             // Stop processing if we encounter an empty row
@@ -33,8 +39,8 @@ export function parseCSV(file: File): Promise<Question[]> {
             }
             
             // Convert string numbers to actual numbers
-            const sizeValue = parseFloat(String(row[1]).trim());
-            const freqValue = parseFloat(String(row[2]).trim());
+            const sizeValue = parseFloat(row[1].trim());
+            const freqValue = parseFloat(row[2].trim());
             
             if (isNaN(sizeValue) || isNaN(freqValue)) {
               console.warn(`Skipping row with invalid number format at line ${i + 1}: Size=${row[1]}, Freq=${row[2]}`);
@@ -42,7 +48,7 @@ export function parseCSV(file: File): Promise<Question[]> {
             }
 
             questions.push({
-              condition: String(row[0]).trim(),
+              condition: row[0].trim(),
               answerB: sizeValue,
               answerC: freqValue,
             });
@@ -54,10 +60,10 @@ export function parseCSV(file: File): Promise<Question[]> {
 
           resolve(questions);
         } catch (error) {
-          reject(new Error(`Failed to parse CSV: ${error.message}`));
+          reject(new Error(`Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`));
         }
       },
-      error: (error) => {
+      error: (error: Papa.ParseError) => {
         reject(new Error(`CSV parsing error: ${error.message}`));
       },
     });
