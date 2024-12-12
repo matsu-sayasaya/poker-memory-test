@@ -1,3 +1,5 @@
+'use client'
+
 import { Suspense, useState } from 'react'
 import MemoryCheckTool from '../components/MemoryCheckTool'
 import CsvUploader from '../components/CsvUploader'
